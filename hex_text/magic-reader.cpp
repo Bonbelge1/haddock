@@ -1,15 +1,10 @@
 #include <iostream>
 #include <fstream>
-#include <iomanip>
 using namespace std;
 
 char convHex(string a) 
 {
-    int x;   
-    stringstream ss;
-    ss << std::hex << a;
-    ss >> x;
-    return x;
+    return strtoul(a.c_str(), NULL, 16);
 }
 
 int main()
@@ -31,7 +26,7 @@ int main()
     file.close();
     
     for(int i = 0; i < confuseList[0].length(); i += 3)
-    {
+    {   
         cout << convHex({confuseList[0][i], confuseList[0][i+1]});
     }
     cout << endl;
