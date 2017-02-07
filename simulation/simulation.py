@@ -13,7 +13,7 @@ class Boat:
 		self.image = pygame.image.load("sprite.png")
 		self.color = (255, 0, 0)
 		self.weight = 3
-		self.pos = [100, 100]
+		self.pos = [10, 10]
 		self.speed = 2
 		self.theta = 0
 		
@@ -24,6 +24,12 @@ class Tiles:
 		self.currentStr = 0.2
 		self.currentDir = random.randrange(0, 360) 
 		self.elementType = "water"
+
+# Class for gps points
+class gpsPoint:
+	def __init__(self):
+		self.color = (0, 0, 0)
+		self.pos = (10, 10)
 
 # Function returning tile coordinate where the boat is 
 def zoneMap(position, map_x, map_y, screen_width, screen_height):
@@ -47,19 +53,17 @@ def main():
 	BLUE = (0, 0, 255)
 	
 	# Creation of the map
-	
-	mat = matrix('lake.txt')
-	
+	matMap = matrix('lake.txt')
 	map_x = len(mat[0])
 	map_y = len(mat)
 	gameMap = [[Tiles() for i in range(map_x)] for j in range(map_y)]
 	for j in range(map_y):
 		for i in range(map_x):
-			gameMap[j][i].color = (0, 255 * mat[j][i], 255)
+			gameMap[j][i].color = (0, 255 * matMap[j][i], 255)
 
 	# Creation of the window
 	pygame.init()
-	tileSize = 20
+	tileSize = 3
 	screen_width = map_x * tileSize
 	screen_height = map_y * tileSize
 	window = pygame.display.set_mode((screen_width, screen_height))
@@ -67,6 +71,13 @@ def main():
 
 	# Creation of the boat
 	boat = Boat()
+
+	# Creation of gps objects
+	matGPS = matrix("gps.txt")
+	lenListGPS = len(matGPS)
+	gps = [gpsPoint() for i in range(lenListGPS)]
+	#for i in range(lenListGPS):
+	#	gps.pos
 
 	# Surface
 	DISPLAYSURF = pygame.display.set_mode()
