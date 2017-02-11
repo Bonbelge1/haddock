@@ -1,9 +1,9 @@
 from xlrd import open_workbook
 
 class resistance(inducedSpeed)
-   return intresistance
+   return int resistance
 
-wb = open_workbook('resistance.xls')
+wb = open_workbook('Resistance.xlsx')
 
 int col = 1
 
