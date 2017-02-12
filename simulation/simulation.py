@@ -7,56 +7,96 @@ from math import atan2, degrees, radians, sin, cos
 # from math import sin, cos, radian
 from pygame.locals import *
 
-# Class for boat
 class Boat:
+	"""Class for boat"""
 	def __init__(self):
 		self.image = pygame.image.load("sprite.png")
-		self.color = (255, 0, 0)
+		self.color = (0, 0, 0)
 		self.weight = 3
 		self.pos = [400, 600]
 		self.speed = 2
 		self.theta = 180  #Trigonometry direction
 		
-# Class for tiles
 class Tiles:
+	"""Class for tiles"""
 	def __init__(self):
-		self.color = (0, 0, 255)
+		self.color = (0, 0, 0)
 		self.currentStr = 0.2
 		self.currentDir = random.randrange(0, 360) 
 		self.elementType = "water"
 
-# Class for gps points
 class gpsPoint:
+	"""Class for gps points"""
 	def __init__(self):
 		self.color = (0, 0, 0)
 		self.pos = [10, 10]
 
-# Function returning tile coordinate where the boat is 
-def zoneMap(position, map_x, map_y, s_width, s_height):
-	return (int(position[0] * map_x / s_width), int(position[1] * map_y / s_height))
+def zoneMap(position, map_x, map_y, width, height):
+	"""Return tile coordinate where the boat is"""
+	return (int(position[0] * map_x / width), int(position[1] * map_y / height))
 
-# Function that makes an int matrix of a text file
 def matrix(file):
+	"""Return an int matrix of a text file"""
 	contents = open(file).read()
 	return [list(map(int, el.split())) for el in contents.split('\n')]
 
-# Function that calculate angle between two points
-def autoAngle(point1, point2):
-	print(degrees(atan2(point2[1] - point1[1], point2[0] - point1[0])))
+def angle2P(point1, point2):
+	"""Returns angle between two points"""
 	return degrees(atan2(point2[1] - point1[1], point2[0] - point1[0]))
 
+def isInRadius(boat, gps, rad):
+	"""Return if gps is in radius of a point"""
+	return (((gps[0] - boat[0]) ** 2 + (gps[1] - boat[1]) ** 2) ** 0.5 < rad)
 
+def drawPts(gps, disp):
+	"""Drawing the points"""
+	for ob in gps:
+		pygame.draw.circle(disp, ob.color, ob.pos, 2)	
+
+def drawBoat(boat, disp):
+	"""Drawing the boat"""
+	tempPos = (int(boat.pos[0]), int(boat.pos[1]))
+	pygame.draw.circle(disp, boat.color, tempPos, boat.weight)
+
+def drawTiles(gameMap, x, y, width, height, disp):
+	"""Drawing the tiles"""
+	for i in range(x):
+		for j in range(y):
+			tup = (i * width / x, j * width / x, width / x - 0, height / y - 0)
+			pygame.draw.rect(disp, gameMap[j][i].color, tup)
+
+def drawTarget(target, disp):
+	"""Drawing the target"""
+	pygame.draw.circle(disp, target.color, target.pos, 5)
+
+def calculateNewBoatPos(boat, target):
+	"""Calculate the new position of the boat"""
+	boat.theta = angle2P(boat.pos, target.pos)
+	boat.pos = (boat.pos[0] + boat.speed * cos(radians(boat.theta)), boat.pos[1] + boat.speed * sin(radians(boat.theta)))
+
+def checkForQuit():
+	"""Quit the simulation"""
+	if pygame.event.get(QUIT): # get all the QUIT events
+		terminate()
+	elif pygame.event.get(KEYUP): # get all the KEYUP events
+		if event.key == K_ESCAPE:
+			terminate()
+
+def terminate():
+	"""Execution to quit"""
+	pygame.quit()
+	sys.exit()
 
 #-----------------------------------------------------------------------------------------------	
    
 def main():
-	
 	# Colors
 	BLACK = (0, 0, 0)
 	WHITE = (255, 255, 255)
-	RED = (255, 0, 0)
-	GREEN = (0, 255, 0)
-	BLUE = (0, 0, 255)
+	RED = (150, 0, 0)
+	GREEN = (0, 82, 33)
+	BLUE = (47, 141, 255)
+	YELLOW = (250, 250, 0)
 	
 	# Creation of the map
 	matMap = matrix('lake.txt')
@@ -65,7 +105,12 @@ def main():
 	gameMap = [[Tiles() for i in range(map_x)] for j in range(map_y)]
 	for j in range(map_y):
 		for i in range(map_x):
-			gameMap[j][i].color = (0, 255 * matMap[j][i], 255)
+			if matMap[j][i] == 0:
+				gameMap[j][i].type = "earth"
+				gameMap[j][i].color = GREEN
+			elif matMap[j][i] == 1:
+				gameMap[j][i].type = "water"
+				gameMap[j][i].color = BLUE
 
 	# Creation of the window
 	pygame.init()
@@ -77,6 +122,7 @@ def main():
 
 	# Creation of the boat
 	boat = Boat()
+	boat.color = RED
 
 	# Creation of gps objects
 	matGPS = matrix("gps.txt")
@@ -84,57 +130,46 @@ def main():
 	for index, ob in enumerate(gps):
 		ob.pos = matGPS[index]
 
-
 	# Surface
 	DISPLAYSURF = pygame.display.set_mode()
 
-	# Infinite loop recursivly
+	# Initialize the first target
+	target = gps.pop(0)
+	target.color = YELLOW
+
+	# Infinite loop recursivly :P
 	while True:
-		
 		# Draw Tiles
-		for i in range(map_x):
-			for j in range(map_y):
-				tup = (i * s_width / map_x, j * s_width / map_x, s_width / map_x - 0, s_height / map_y - 0)
-				pygame.draw.rect(DISPLAYSURF, gameMap[j][i].color, tup)
+		drawTiles(gameMap, map_x, map_y, s_width, s_height, DISPLAYSURF)
 		
 		#Draw GPS Points
-		for ob in gps:
-			pygame.draw.circle(DISPLAYSURF, ob.color, ob.pos, 2)
-
-
-		# Draw Boat
-		posTemp = (int(boat.pos[0]), int(boat.pos[1]))
-		#pygame.sprite.Group.draw(DISPLAYSURF, boat.image, posTemp)
-		pygame.draw.circle(DISPLAYSURF, boat.color, posTemp, int(boat.weight))
-	
-		# Horizontal border verification (not up to date)
-		#if not (boat.weight <= int(boat.pos[0] + boat.speed * cos(radians(boat.theta))) <= s_width - boat.weight):
-		#	boat.theta = 180 - boat.theta
+		drawPts(gps, DISPLAYSURF)
 		
-		# Vertical border verification (not up to date)
-		#if not (boat.weight <= int(boat.pos[1] + boat.speed * sin(radians(boat.theta))) <= s_height - boat.weight):
-		#	boat.theta = 360 - boat.theta
+		# Draw Boat
+		drawBoat(boat, DISPLAYSURF)
 
-		# Calculate new position
-		boat.theta = autoAngle(boat.pos, gps[0].pos)
-		boat.pos = (boat.pos[0] + boat.speed * cos(radians(boat.theta)), boat.pos[1] + boat.speed * sin(radians(boat.theta)))
-		# gps = zoneMap(boat.pos, map_x, map_y, s_width, s_height)
-			
+		if target:
+			drawTarget(target, DISPLAYSURF)
+			calculateNewBoatPos(boat, target)
+
+			if isInRadius(boat.pos, target.pos, 2) and len(gps):
+					target = gps.pop(0)
+					target.color = YELLOW
+
+			elif isInRadius(boat.pos, target.pos, 2) and not len(gps):
+				target = False
+		
 
 		# Update the window
 		pygame.display.flip()
-		DISPLAYSURF.fill(BLACK)
 		
-		# Tic toc
-		pygame.time.delay(30) 
-	
-#-----------------------------------------------------------------------------------------------
+		# Quit event				       
+		checkForQuit()
 
-	# Not working quit event				       
-	for event in pygame.event.get():
-		if (event.type == QUIT):
-			pygame.quit()
-			sys.exit()
+		# Tic toc
+		pygame.time.delay(20) 
+		
+#-----------------------------------------------------------------------------------------------
 
 if __name__ == '__main__':
 	main() 
