@@ -10,7 +10,7 @@ from pygame.locals import *
 class Boat:
 	"""Class for boat"""
 	def __init__(self):
-		self.image = pygame.image.load("sprite.png")
+		#self.image = pygame.image.load("sprite.png")
 		self.color = (0, 0, 0)
 		self.weight = 3
 		self.pos = [400, 600]
@@ -22,7 +22,7 @@ class Tiles:
 	def __init__(self):
 		self.color = (0, 0, 0)
 		self.currentStr = 0.2
-		self.currentDir = random.randrange(0, 360) 
+		self.currentDir = 0 #random.randrange(0, 360) 
 		self.elementType = "water"
 
 class gpsPoint:
@@ -30,10 +30,21 @@ class gpsPoint:
 	def __init__(self):
 		self.color = (0, 0, 0)
 		self.pos = [10, 10]
+		self.weight = 3
 
-def zoneMap(position, map_x, map_y, width, height):
+class Map:
+	"""Class for the map"""
+	def __init__(self):
+		self.xTiles = 0
+		self.yTiles = 0
+		self.ratio = 2
+		self.tileSize = 10
+		self.xPixels = 0
+		self.yPixels = 0
+
+def zoneMap(position, map):
 	"""Return tile coordinate where the boat is"""
-	return (int(position[0] * map_x / width), int(position[1] * map_y / height))
+	return (int(position[0] * map.xTiles / map.xPixels), int(position[1] * map.yTiles / map.yPixels))
 
 def matrix(file):
 	"""Return an int matrix of a text file"""
@@ -51,28 +62,31 @@ def isInRadius(boat, gps, rad):
 def drawPts(gps, disp):
 	"""Drawing the points"""
 	for ob in gps:
-		pygame.draw.circle(disp, ob.color, ob.pos, 2)	
+		pygame.draw.circle(disp, ob.color, ob.pos, ob.weight)	
 
 def drawBoat(boat, disp):
 	"""Drawing the boat"""
 	tempPos = (int(boat.pos[0]), int(boat.pos[1]))
 	pygame.draw.circle(disp, boat.color, tempPos, boat.weight)
 
-def drawTiles(gameMap, x, y, width, height, disp):
+def drawTiles(gameMap, map, disp):
 	"""Drawing the tiles"""
-	for i in range(x):
-		for j in range(y):
-			tup = (i * width / x, j * width / x, width / x - 0, height / y - 0)
+	for i in range(map.xTiles):
+		for j in range(map.yTiles):
+			tup = (i * map.xPixels / map.xTiles, j * map.xPixels / map.xTiles, map.xPixels / map.xTiles, map.yPixels / map.yTiles)
 			pygame.draw.rect(disp, gameMap[j][i].color, tup)
 
 def drawTarget(target, disp):
 	"""Drawing the target"""
-	pygame.draw.circle(disp, target.color, target.pos, 5)
+	pygame.draw.circle(disp, target.color, target.pos, target.weight)
 
 def calculateNewBoatPos(boat, target):
 	"""Calculate the new position of the boat"""
 	boat.theta = angle2P(boat.pos, target.pos)
 	boat.pos = (boat.pos[0] + boat.speed * cos(radians(boat.theta)), boat.pos[1] + boat.speed * sin(radians(boat.theta)))
+	
+	#zoneMap(boat.pos, map.xTiles, map.yTiles, width, height)
+	#boat.pos = (boat.pos[0] + .currentStr * cos(radians(.currentDir)), boat.pos[1] + .currentStr * sin(radians(.currentDir)))
 
 def checkForQuit():
 	"""Quit the simulation"""
@@ -100,24 +114,28 @@ def main():
 	
 	# Creation of the map
 	matMap = matrix('lake.txt')
-	map_x = len(matMap[0])
-	map_y = len(matMap)
-	gameMap = [[Tiles() for i in range(map_x)] for j in range(map_y)]
-	for j in range(map_y):
-		for i in range(map_x):
-			if matMap[j][i] == 0:
-				gameMap[j][i].type = "earth"
-				gameMap[j][i].color = GREEN
-			elif matMap[j][i] == 1:
-				gameMap[j][i].type = "water"
-				gameMap[j][i].color = BLUE
+	map = Map()
+	map.xTiles = len(matMap[0])
+	map.yTiles = len(matMap)
+	gameMap = [[Tiles() for i in range(map.xTiles)] for j in range(map.yTiles)]
+	for i in range(map.yTiles):
+		for j in range(map.xTiles):
+			if matMap[i][j] == 0:
+				gameMap[i][j].type = "earth"
+				gameMap[i][j].color = GREEN
+			elif matMap[i][j] == 1:
+				gameMap[i][j].type = "water"
+				gameMap[i][j].color = BLUE
 
 	# Creation of the window
 	pygame.init()
-	tileSize = 20
-	s_width = map_x * tileSize
-	s_height = map_y * tileSize
-	window = pygame.display.set_mode((s_width, s_height))
+	
+	map.ratio = 2
+	map.tileSize = 20
+
+	map.xPixels = map.xTiles * map.tileSize
+	map.yPixels = map.yTiles * map.tileSize
+	window = pygame.display.set_mode((map.xPixels, map.yPixels))
 	pygame.display.set_caption("Haddock")
 
 	# Creation of the boat
@@ -140,7 +158,7 @@ def main():
 	# Infinite loop recursivly :P
 	while True:
 		# Draw Tiles
-		drawTiles(gameMap, map_x, map_y, s_width, s_height, DISPLAYSURF)
+		drawTiles(gameMap, map, DISPLAYSURF)
 		
 		#Draw GPS Points
 		drawPts(gps, DISPLAYSURF)
