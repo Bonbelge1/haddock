@@ -103,6 +103,26 @@ def terminate():
 	pygame.quit()
 	sys.exit()
 
+#--------------------------
+
+def resistance(speed)
+	wb = open_workbook('Resistance.xlsx')
+	int col = 1
+	while sheet.cell((1, col).value) < speed
+	col = col + 1
+
+	return  (speed / sheet.cell((1, col).value) * sheet.cell((2, col).value))
+
+def proximitySensor()
+	proximitySensorStatus = False
+
+	for dist in range(.22, 7)
+		for angle in range(15)
+			if gameMap[boat.pos + dist * cos(boat.theta + angle)][boat.pos + dist * sin(boat.theta + angle)].type == "earth"
+				proximitySensorStatus = True
+
+	return proximitySensorStatus
+
 #-----------------------------------------------------------------------------------------------	
    
 def main():
