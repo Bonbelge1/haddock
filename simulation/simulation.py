@@ -13,7 +13,7 @@ class Boat:
 		#self.image = pygame.image.load("sprite.png")
 		self.color = (0, 0, 0)
 		self.weight = 3
-		self.pos = [400, 600]
+		self.pos = [300, 600]
 		self.speed = 2
 		self.theta = 180  #Trigonometry direction
 		
@@ -21,8 +21,8 @@ class Tiles:
 	"""Class for tiles"""
 	def __init__(self):
 		self.color = (0, 0, 0)
-		self.currentStr = 0.2
-		self.currentDir = 0 #random.randrange(0, 360) 
+		self.currentStr = 1
+		self.currentDir = random.randrange(0, 360) 
 		self.elementType = "water"
 
 class gpsPoint:
@@ -69,24 +69,26 @@ def drawBoat(boat, disp):
 	tempPos = (int(boat.pos[0]), int(boat.pos[1]))
 	pygame.draw.circle(disp, boat.color, tempPos, boat.weight)
 
-def drawTiles(gameMap, map, disp):
+def drawTiles(tiles, map, disp):
 	"""Drawing the tiles"""
 	for i in range(map.xTiles):
 		for j in range(map.yTiles):
-			tup = (i * map.xPixels / map.xTiles, j * map.xPixels / map.xTiles, map.xPixels / map.xTiles, map.yPixels / map.yTiles)
-			pygame.draw.rect(disp, gameMap[j][i].color, tup)
+			tup = (i * map.tileSize, j * map.tileSize, map.tileSize, map.tileSize)
+			
+			pygame.draw.rect(disp, tiles[j][i].color, tup)
 
 def drawTarget(target, disp):
 	"""Drawing the target"""
 	pygame.draw.circle(disp, target.color, target.pos, target.weight)
 
-def calculateNewBoatPos(boat, target):
+def calculateNewBoatPos(boat, target, map, tiles):
 	"""Calculate the new position of the boat"""
 	boat.theta = angle2P(boat.pos, target.pos)
 	boat.pos = (boat.pos[0] + boat.speed * cos(radians(boat.theta)), boat.pos[1] + boat.speed * sin(radians(boat.theta)))
 	
-	#zoneMap(boat.pos, map.xTiles, map.yTiles, width, height)
-	#boat.pos = (boat.pos[0] + .currentStr * cos(radians(.currentDir)), boat.pos[1] + .currentStr * sin(radians(.currentDir)))
+	b, a = zoneMap(boat.pos, map)
+	#print(b, a, boat.pos)
+	boat.pos = (boat.pos[0] + tiles[a][b].currentStr * cos(radians(tiles[a][b].currentDir)), boat.pos[1] + tiles[a][b].currentStr * sin(radians(tiles[a][b].currentDir)))
 
 def checkForQuit():
 	"""Quit the simulation"""
@@ -117,15 +119,17 @@ def main():
 	map = Map()
 	map.xTiles = len(matMap[0])
 	map.yTiles = len(matMap)
-	gameMap = [[Tiles() for i in range(map.xTiles)] for j in range(map.yTiles)]
-	for i in range(map.yTiles):
-		for j in range(map.xTiles):
+	tiles = [[Tiles() for i in range(map.xTiles)] for j in range(map.yTiles)]
+	print(len(tiles[0]), len(tiles), map.xTiles, map.yTiles)
+
+	for j in range(map.xTiles):
+		for i in range(map.yTiles):
 			if matMap[i][j] == 0:
-				gameMap[i][j].type = "earth"
-				gameMap[i][j].color = GREEN
+				tiles[i][j].type = "earth"
+				tiles[i][j].color = GREEN
 			elif matMap[i][j] == 1:
-				gameMap[i][j].type = "water"
-				gameMap[i][j].color = BLUE
+				tiles[i][j].type = "water"
+				tiles[i][j].color = BLUE
 
 	# Creation of the window
 	pygame.init()
@@ -158,7 +162,7 @@ def main():
 	# Infinite loop recursivly :P
 	while True:
 		# Draw Tiles
-		drawTiles(gameMap, map, DISPLAYSURF)
+		drawTiles(tiles, map, DISPLAYSURF)
 		
 		#Draw GPS Points
 		drawPts(gps, DISPLAYSURF)
@@ -168,7 +172,7 @@ def main():
 
 		if target:
 			drawTarget(target, DISPLAYSURF)
-			calculateNewBoatPos(boat, target)
+			calculateNewBoatPos(boat, target, map, tiles)
 
 			if isInRadius(boat.pos, target.pos, 2) and len(gps):
 					target = gps.pop(0)
